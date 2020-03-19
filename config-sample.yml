@@ -1,0 +1,20 @@
+log:
+  json: false
+  level: DEBUG
+
+exporter:
+  port: 22546
+  path: /metrics
+  namespace: s3rw
+  interval_duration: 10m
+
+s3:
+  url: https://s3.amazonaws.com
+  bucket: my-test-bucket
+  region: "us-east-1"
+  download_file_name: test-download
+  download_file_path: ./assets/test-download
+  upload_file_name: test-upload
+  upload_file_path: ./assets/test-upload
+  api_key: secret-key
+  secret_access_key: access-key
