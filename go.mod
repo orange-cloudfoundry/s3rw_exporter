@@ -3,18 +3,16 @@ module github.com/orange-cloudfoundry/s3rw_exporter
 go 1.14
 
 require (
-	github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d // indirect
-	github.com/aws/aws-sdk-go v1.30.4
-	github.com/golang/protobuf v1.3.5 // indirect
-	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
+	github.com/alecthomas/units v0.0.0-20201120081800-1786d5ef83d4 // indirect
+	github.com/aws/aws-sdk-go v1.36.31
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.5.1
-	github.com/prometheus/common v0.9.1
-	github.com/prometheus/procfs v0.0.11 // indirect
-	github.com/sirupsen/logrus v1.5.0
-	golang.org/x/sys v0.0.0-20200331124033-c3d80250170d // indirect
+	github.com/prometheus/client_golang v1.9.0
+	github.com/prometheus/common v0.15.0
+	github.com/prometheus/procfs v0.3.0 // indirect
+	github.com/sirupsen/logrus v1.7.0
+	github.com/stretchr/testify v1.5.1 // indirect
+	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
+	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
-	gopkg.in/yaml.v2 v2.2.8
+	gopkg.in/yaml.v2 v2.4.0
 )

@@ -127,7 +127,7 @@ func (m *manager) FirstRun() error {
 			switch aerr.Code() {
 			case s3.ErrCodeBucketAlreadyExists:
 			case s3.ErrCodeBucketAlreadyOwnedByYou:
-				m.entry.Warnf("bucket already exists", err.Error())
+				m.entry.Warnf("bucket already exists: %s", err.Error())
 			default:
 				return errors.Wrapf(err, "unable to create bucket '%s'", m.config.S3.Bucket)
 			}
