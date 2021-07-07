@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/prometheus/common/log"
+	log "github.com/sirupsen/logrus"
 	"github.com/prometheus/common/version"
 	"gopkg.in/alecthomas/kingpin.v2"
 	"net/http"
@@ -20,13 +20,15 @@ func main() {
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
 
-	log.Base().SetFormat("logger://stderr")
-	log.Base().SetLevel("error")
+	log.SetOutput(os.Stderr)
+	log.SetLevel(log.ErrorLevel)
 
 	config := NewConfig(*configFile)
-	log.Base().SetLevel(config.Log.Level)
+	if lvl, err := log.ParseLevel(config.Log.Level); err == nil {
+		log.SetLevel(lvl)
+	}
 	if config.Log.JSON {
-		log.Base().SetFormat("logger://stderr?json=true")
+		log.SetFormatter(&log.JSONFormatter{})
 	}
 
 	manager, err := NewManager(config)

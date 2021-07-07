@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/prometheus/common/log"
+	log "github.com/sirupsen/logrus"
 
 	"gopkg.in/yaml.v2"
 )
