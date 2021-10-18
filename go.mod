@@ -1,19 +1,28 @@
 module github.com/orange-cloudfoundry/s3rw_exporter
 
-go 1.14
+go 1.17
 
 require (
-	github.com/alecthomas/units v0.0.0-20210208195552-ff826a37aa15 // indirect
-	github.com/aws/aws-sdk-go v1.39.1
-	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/aws/aws-sdk-go v1.41.4
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.11.0
-	github.com/prometheus/common v0.29.0
-	github.com/prometheus/procfs v0.7.0 // indirect
+	github.com/prometheus/common v0.31.1
 	github.com/sirupsen/logrus v1.8.1
-	github.com/stretchr/testify v1.5.1 // indirect
-	golang.org/x/sys v0.0.0-20210630005230-0f9fa26af87c // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/yaml.v2 v2.4.0
+)
+
+require (
+	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
+	github.com/alecthomas/units v0.0.0-20210927113745-59d0afb8317a // indirect
+	github.com/beorn7/perks v1.0.1 // indirect
+	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
+	github.com/prometheus/client_model v0.2.0 // indirect
+	github.com/prometheus/procfs v0.7.3 // indirect
+	github.com/stretchr/testify v1.5.1 // indirect
+	golang.org/x/sys v0.0.0-20211015200801-69063c4bb744 // indirect
+	google.golang.org/protobuf v1.27.1 // indirect
 )
