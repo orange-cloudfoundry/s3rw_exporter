@@ -28,12 +28,16 @@ archives:
     format: "tar.gz"
     name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
     wrap_in_directory: true
+    files:
+      - assets/*
   - id: archives-zip
     builds:
       - binary
     format: "zip"
     name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
     wrap_in_directory: true
+    files:
+      - assets/*
 
 checksum:
   name_template: checksums.txt
