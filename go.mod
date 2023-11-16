@@ -3,7 +3,7 @@ module github.com/orange-cloudfoundry/s3rw_exporter
 go 1.21
 
 require (
-	github.com/alecthomas/kingpin/v2 v2.3.2
+	github.com/alecthomas/kingpin/v2 v2.4.0
 	github.com/aws/aws-sdk-go v1.47.12
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.17.0
