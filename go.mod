@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/alecthomas/kingpin/v2 v2.4.0
-	github.com/aws/aws-sdk-go v1.50.33
+	github.com/aws/aws-sdk-go v1.50.34
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.19.0
 	github.com/prometheus/common v0.50.0
