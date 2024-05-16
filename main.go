@@ -1,10 +1,10 @@
 package main
 
 import (
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-	log "github.com/sirupsen/logrus"
-	"github.com/prometheus/common/version"
 	"github.com/alecthomas/kingpin/v2"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/prometheus/common/version"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"os"
 	"strconv"
