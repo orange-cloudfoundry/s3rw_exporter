@@ -150,7 +150,3 @@ func (m *manager) FirstRun() error {
 
 	return nil
 }
-
-// Local Variables:
-// ispell-local-dictionary: "american"
-// End:
