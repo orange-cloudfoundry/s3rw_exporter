@@ -57,7 +57,7 @@ func (m *manager) newSession() (*session.Session, error) {
 }
 
 func (m *manager) Download() error {
-	session, err := m.newSession()
+	newSession, err := m.newSession()
 	if err != nil {
 		m.entry.Errorf("unable to create session: %s", err.Error())
 		return errors.Wrap(err, "unable to create session")
@@ -65,7 +65,7 @@ func (m *manager) Download() error {
 
 	buffer := []byte{}
 	memWriter := aws.NewWriteAtBuffer(buffer)
-	downloader := s3manager.NewDownloader(session)
+	downloader := s3manager.NewDownloader(newSession)
 	_, err = downloader.Download(memWriter,
 		&s3.GetObjectInput{
 			Bucket: aws.String(m.config.S3.Bucket),
@@ -84,14 +84,14 @@ func (m *manager) Download() error {
 }
 
 func (m *manager) Upload() error {
-	session, err := m.newSession()
+	newSession, err := m.newSession()
 	if err != nil {
 		m.entry.Errorf("unable to create session: %s", err.Error())
 		return errors.Wrap(err, "unable to create session")
 	}
 
 	reader := bytes.NewReader(m.uploadFile)
-	uploader := s3manager.NewUploader(session)
+	uploader := s3manager.NewUploader(newSession)
 	_, err = uploader.Upload(&s3manager.UploadInput{
 		Body:   reader,
 		Bucket: aws.String(m.config.S3.Bucket),
@@ -107,12 +107,12 @@ func (m *manager) Upload() error {
 }
 
 func (m *manager) FirstRun() error {
-	session, err := m.newSession()
+	newSession, err := m.newSession()
 	if err != nil {
 		return errors.Wrap(err, "unable to create session")
 	}
 
-	client := s3.New(session)
+	client := s3.New(newSession)
 	m.entry.Infof("creating bucket '%s'", m.config.S3.Bucket)
 	_, err = client.CreateBucket(
 		&s3.CreateBucketInput{
@@ -137,7 +137,7 @@ func (m *manager) FirstRun() error {
 	}
 
 	reader := bytes.NewReader(m.downloadFile)
-	uploader := s3manager.NewUploader(session)
+	uploader := s3manager.NewUploader(newSession)
 	m.entry.Infof("uploading initial file '%s' from '%s'", m.config.S3.DownloadKey, m.config.S3.DownloadFilePath)
 	_, err = uploader.Upload(&s3manager.UploadInput{
 		Body:   reader,
