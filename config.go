@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"time"
 
@@ -101,7 +100,7 @@ func (c *Config) Validate() error {
 
 // NewConfig - Creates and validates config from given reader
 func NewConfig(file io.Reader) *Config {
-	content, err := ioutil.ReadAll(file)
+	content, err := io.ReadAll(file)
 	if err != nil {
 		log.Fatalf("unable to read configuration file : %s", err)
 		os.Exit(1)
