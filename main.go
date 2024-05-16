@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/alecthomas/kingpin/v2"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/prometheus/common/version"
@@ -52,5 +53,7 @@ func main() {
 	http.Handle(manager.config.Exporter.Path, promhttp.Handler())
 	addr := ":" + strconv.Itoa(manager.config.Exporter.Port)
 	log.Infof("listening on %s", addr)
-	http.ListenAndServe(addr, nil)
+	if err := http.ListenAndServe(addr, nil); err != nil {
+		panic(fmt.Sprintf("unable to listen on port %d: %s", manager.config.Exporter.Port, err.Error()))
+	}
 }
