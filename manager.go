@@ -10,7 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
-	"io/ioutil"
+	"os"
 )
 
 type manager struct {
@@ -22,11 +22,11 @@ type manager struct {
 
 // NewManager -
 func NewManager(config *Config) (*manager, error) {
-	download, err := ioutil.ReadFile(config.S3.DownloadFilePath)
+	download, err := os.ReadFile(config.S3.DownloadFilePath)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable read configured download file from path %s", config.S3.DownloadFilePath)
 	}
-	upload, err := ioutil.ReadFile(config.S3.UploadFilePath)
+	upload, err := os.ReadFile(config.S3.UploadFilePath)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable read configured upload file from path %s", config.S3.UploadFilePath)
 	}
