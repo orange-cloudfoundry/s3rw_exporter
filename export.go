@@ -60,7 +60,7 @@ func loadMetricsReporter(namespace string) {
 }
 
 // RecordMetrics -
-func RecordMetrics(manager *manager) {
+func RecordMetrics(manager *Manager) {
 	go func() {
 		for {
 			downloadError.Reset()

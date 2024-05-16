@@ -13,7 +13,7 @@ import (
 	"os"
 )
 
-type manager struct {
+type Manager struct {
 	config       *Config
 	downloadFile []byte
 	uploadFile   []byte
@@ -21,7 +21,7 @@ type manager struct {
 }
 
 // NewManager -
-func NewManager(config *Config) (*manager, error) {
+func NewManager(config *Config) (*Manager, error) {
 	download, err := os.ReadFile(config.S3.DownloadFilePath)
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable read configured download file from path %s", config.S3.DownloadFilePath)
@@ -30,7 +30,7 @@ func NewManager(config *Config) (*manager, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "unable read configured upload file from path %s", config.S3.UploadFilePath)
 	}
-	return &manager{
+	return &Manager{
 		config:       config,
 		downloadFile: download,
 		uploadFile:   upload,
@@ -41,7 +41,7 @@ func NewManager(config *Config) (*manager, error) {
 	}, nil
 }
 
-func (m *manager) newSession() (*session.Session, error) {
+func (m *Manager) newSession() (*session.Session, error) {
 	m.entry.Debugf("creating new session")
 
 	config := aws.NewConfig()
@@ -56,7 +56,7 @@ func (m *manager) newSession() (*session.Session, error) {
 	return session.NewSession(config)
 }
 
-func (m *manager) Download() error {
+func (m *Manager) Download() error {
 	newSession, err := m.newSession()
 	if err != nil {
 		m.entry.Errorf("unable to create session: %s", err.Error())
@@ -83,7 +83,7 @@ func (m *manager) Download() error {
 	return nil
 }
 
-func (m *manager) Upload() error {
+func (m *Manager) Upload() error {
 	newSession, err := m.newSession()
 	if err != nil {
 		m.entry.Errorf("unable to create session: %s", err.Error())
@@ -106,7 +106,7 @@ func (m *manager) Upload() error {
 	return nil
 }
 
-func (m *manager) FirstRun() error {
+func (m *Manager) FirstRun() error {
 	newSession, err := m.newSession()
 	if err != nil {
 		return errors.Wrap(err, "unable to create session")
