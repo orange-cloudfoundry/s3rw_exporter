@@ -25,16 +25,19 @@ type exporterConfig struct {
 }
 
 type s3Config struct {
-	URL              string `yaml:"url"`
-	Region           string `yaml:"region"`
-	Bucket           string `yaml:"bucket"`
-	DownloadKey      string `yaml:"download_file_name"`
-	DownloadFilePath string `yaml:"download_file_path"`
-	UploadKey        string `yaml:"upload_file_name"`
-	UploadFilePath   string `yaml:"upload_file_path"`
-	APIKey           string `yaml:"api_key"`
-	APISecret        string `yaml:"secret_access_key"`
-	S3ForcePathStyle bool   `yaml:"s3_force_path_style"`
+	URL                        string `yaml:"url"`
+	Region                     string `yaml:"region"`
+	Bucket                     string `yaml:"bucket"`
+	DownloadKey                string `yaml:"download_file_name"`
+	DownloadFilePath           string `yaml:"download_file_path"`
+	UploadKey                  string `yaml:"upload_file_name"`
+	UploadFilePath             string `yaml:"upload_file_path"`
+	APIKey                     string `yaml:"api_key"`
+	APISecret                  string `yaml:"secret_access_key"`
+	EnableVersionningCheck     bool   `yaml:"enable_versionning_check"`
+	EnableMultipartUploadCheck bool   `yaml:"enable_multipart_upload_check"`
+	EnableLockingObjectCheck   bool   `yaml:"enable_locking_object_check"`
+	S3ForcePathStyle           bool   `yaml:"s3_force_path_style"`
 }
 
 // Config -
@@ -89,6 +92,19 @@ func (c *s3Config) validate() error {
 	if !c.S3ForcePathStyle {
 		c.S3ForcePathStyle = false
 	}
+
+	if !c.EnableVersionningCheck {
+		c.EnableVersionningCheck = false
+	}
+
+	if !c.EnableMultipartUploadCheck {
+		c.EnableMultipartUploadCheck = false
+	}
+
+	if !c.EnableLockingObjectCheck {
+		c.EnableLockingObjectCheck = false
+	}
+
 	return nil
 }
 
