@@ -44,13 +44,13 @@ type Config struct {
 }
 
 func (c *exporterConfig) validate() error {
-	if 0 == len(c.Path) {
+	if len(c.Path) == 0 {
 		return fmt.Errorf("missing key 'exporter.path'")
 	}
-	if 0 == c.Port {
+	if c.Port == 0 {
 		return fmt.Errorf("missing or zero key 'expoerter.port'")
 	}
-	if 0 == c.IntervalDuration {
+	if c.IntervalDuration == 0 {
 		return fmt.Errorf("missing or zero key 'exporter.interval_duration'")
 	}
 	return nil
