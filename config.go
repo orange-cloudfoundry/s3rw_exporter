@@ -34,6 +34,7 @@ type s3Config struct {
 	UploadFilePath   string `yaml:"upload_file_path"`
 	APIKey           string `yaml:"api_key"`
 	APISecret        string `yaml:"secret_access_key"`
+	S3ForcePathStyle bool   `yaml:"s3_force_path_style"`
 }
 
 // Config -
@@ -83,6 +84,10 @@ func (c *s3Config) validate() error {
 	}
 	if len(c.APISecret) == 0 {
 		return fmt.Errorf("missing mandatory key s3.api_secret")
+	}
+	// Default S3ForcePathStyle to false if not provided
+	if !c.S3ForcePathStyle {
+		c.S3ForcePathStyle = false
 	}
 	return nil
 }

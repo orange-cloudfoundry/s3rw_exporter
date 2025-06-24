@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"os"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -11,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	log "github.com/sirupsen/logrus"
-	"os"
 )
 
 type Manager struct {
@@ -54,6 +55,7 @@ func (m *Manager) newSession() (*session.Session, error) {
 	config.WithRegion(m.config.S3.Region)
 	config.WithEndpoint(m.config.S3.URL)
 	config.WithMaxRetries(3)
+	config.WithS3ForcePathStyle(*aws.Bool(m.config.S3.S3ForcePathStyle))
 	return session.NewSession(config)
 }
 
