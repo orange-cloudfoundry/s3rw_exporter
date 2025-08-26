@@ -60,6 +60,14 @@ func (m *Manager) newConfig(ctx context.Context) (aws.Config, error) {
 	return cfg, nil
 }
 
+func customS3EndpointResolverV2(url string) s3.EndpointResolverV2 {
+	return s3.EndpointResolverFunc(func(region string, options s3.EndpointResolverOptions) (aws.Endpoint, error) {
+		return aws.Endpoint{
+			URL: url,
+		}, nil
+	})
+}
+
 func (m *Manager) Download() error {
 	ctx := context.Background()
 	cfg, err := m.newConfig(ctx)
@@ -68,8 +76,7 @@ func (m *Manager) Download() error {
 		return fmt.Errorf("unable to create AWS config: %s", err)
 	}
 
-	endpointResolver := s3.EndpointResolverFromURL(m.config.S3.URL)
-	client := s3.NewFromConfig(cfg, s3.WithEndpointResolver(endpointResolver))
+	client := s3.NewFromConfig(cfg, s3.WithEndpointResolverV2(customS3EndpointResolverV2(m.config.S3.URL)))
 	downloader := manager.NewDownloader(client)
 	buf := manager.NewWriteAtBuffer([]byte{})
 	_, err = downloader.Download(ctx, buf, &s3.GetObjectInput{
@@ -95,8 +102,7 @@ func (m *Manager) Upload() error {
 		return fmt.Errorf("unable to create AWS config: %s", err)
 	}
 
-	endpointResolver := s3.EndpointResolverFromURL(m.config.S3.URL)
-	client := s3.NewFromConfig(cfg, s3.WithEndpointResolver(endpointResolver))
+	client := s3.NewFromConfig(cfg, s3.WithEndpointResolverV2(customS3EndpointResolverV2(m.config.S3.URL)))
 	uploader := manager.NewUploader(client)
 	reader := bytes.NewReader(m.uploadFile)
 	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
@@ -118,8 +124,7 @@ func (m *Manager) FirstRun() error {
 		return fmt.Errorf("unable to create AWS config: %s", err)
 	}
 
-	endpointResolver := s3.EndpointResolverFromURL(m.config.S3.URL)
-	client := s3.NewFromConfig(cfg, s3.WithEndpointResolver(endpointResolver))
+	client := s3.NewFromConfig(cfg, s3.WithEndpointResolverV2(customS3EndpointResolverV2(m.config.S3.URL)))
 	m.entry.Infof("creating bucket '%s'", m.config.S3.Bucket)
 	_, err = client.CreateBucket(ctx, &s3.CreateBucketInput{
 		Bucket: &m.config.S3.Bucket,
