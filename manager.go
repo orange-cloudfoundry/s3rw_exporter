@@ -65,7 +65,7 @@ type staticS3EndpointResolver struct {
 	url string
 }
 
-func (r staticS3EndpointResolver) ResolveEndpoint(region string, options s3.EndpointResolverOptions) (aws.Endpoint, error) {
+func (r staticS3EndpointResolver) ResolveEndpoint(ctx context.Context, params s3.EndpointParameters) (aws.Endpoint, error) {
 	return aws.Endpoint{
 		URL: r.url,
 	}, nil
