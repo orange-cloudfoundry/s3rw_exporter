@@ -53,13 +53,6 @@ func (m *Manager) newConfig(ctx context.Context) (aws.Config, error) {
 			m.config.S3.APISecret,
 			"",
 		)),
-		config.WithEndpointResolverWithOptions(
-			aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-				return aws.Endpoint{
-					URL: m.config.S3.URL,
-				}, nil
-			}),
-		),
 	)
 	if err != nil {
 		return aws.Config{}, err
@@ -75,7 +68,8 @@ func (m *Manager) Download() error {
 		return fmt.Errorf("unable to create AWS config: %s", err)
 	}
 
-	client := s3.NewFromConfig(cfg)
+	endpointResolver := s3.EndpointResolverFromURL(m.config.S3.URL)
+	client := s3.NewFromConfig(cfg, s3.WithEndpointResolver(endpointResolver))
 	downloader := manager.NewDownloader(client)
 	buf := manager.NewWriteAtBuffer([]byte{})
 	_, err = downloader.Download(ctx, buf, &s3.GetObjectInput{
@@ -101,7 +95,8 @@ func (m *Manager) Upload() error {
 		return fmt.Errorf("unable to create AWS config: %s", err)
 	}
 
-	client := s3.NewFromConfig(cfg)
+	endpointResolver := s3.EndpointResolverFromURL(m.config.S3.URL)
+	client := s3.NewFromConfig(cfg, s3.WithEndpointResolver(endpointResolver))
 	uploader := manager.NewUploader(client)
 	reader := bytes.NewReader(m.uploadFile)
 	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
@@ -123,7 +118,8 @@ func (m *Manager) FirstRun() error {
 		return fmt.Errorf("unable to create AWS config: %s", err)
 	}
 
-	client := s3.NewFromConfig(cfg)
+	endpointResolver := s3.EndpointResolverFromURL(m.config.S3.URL)
+	client := s3.NewFromConfig(cfg, s3.WithEndpointResolver(endpointResolver))
 	m.entry.Infof("creating bucket '%s'", m.config.S3.Bucket)
 	_, err = client.CreateBucket(ctx, &s3.CreateBucketInput{
 		Bucket: &m.config.S3.Bucket,
