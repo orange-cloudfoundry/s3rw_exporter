@@ -60,12 +60,19 @@ func (m *Manager) newConfig(ctx context.Context) (aws.Config, error) {
 	return cfg, nil
 }
 
+
+type staticS3EndpointResolver struct {
+	url string
+}
+
+func (r staticS3EndpointResolver) ResolveEndpoint(region string, options s3.EndpointResolverOptions) (aws.Endpoint, error) {
+	return aws.Endpoint{
+		URL: r.url,
+	}, nil
+}
+
 func customS3EndpointResolverV2(url string) s3.EndpointResolverV2 {
-	return s3.EndpointResolverFunc(func(region string, options s3.EndpointResolverOptions) (aws.Endpoint, error) {
-		return aws.Endpoint{
-			URL: url,
-		}, nil
-	})
+	return staticS3EndpointResolver{url: url}
 }
 
 func (m *Manager) Download() error {
