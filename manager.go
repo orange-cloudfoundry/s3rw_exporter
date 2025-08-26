@@ -2,16 +2,18 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/credentials"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	log "github.com/sirupsen/logrus"
 	"os"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/config"
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	log "github.com/sirupsen/logrus"
 )
 
 type Manager struct {
@@ -42,42 +44,57 @@ func NewManager(config *Config) (*Manager, error) {
 	}, nil
 }
 
-func (m *Manager) newSession() (*session.Session, error) {
-	m.entry.Debugf("creating new session")
+func (m *Manager) newConfig(ctx context.Context) (aws.Config, error) {
+	m.entry.Debugf("creating new AWS config")
+	cfg, err := config.LoadDefaultConfig(ctx,
+		config.WithRegion(m.config.S3.Region),
+		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
+			m.config.S3.APIKey,
+			m.config.S3.APISecret,
+			"",
+		)),
+	)
+	if err != nil {
+		return aws.Config{}, err
+	}
+	return cfg, nil
+}
 
-	config := aws.NewConfig()
-	config.WithCredentials(credentials.NewStaticCredentials(
-		m.config.S3.APIKey,
-		m.config.S3.APISecret,
-		"",
-	))
-	config.WithRegion(m.config.S3.Region)
-	config.WithEndpoint(m.config.S3.URL)
-	config.WithMaxRetries(3)
-	return session.NewSession(config)
+
+type staticS3EndpointResolver struct {
+	url string
+}
+
+func (r staticS3EndpointResolver) ResolveEndpoint(ctx context.Context, params s3.EndpointParameters) (aws.Endpoint, error) {
+	return aws.Endpoint{
+		URL: r.url,
+	}, nil
+}
+
+func customS3EndpointResolverV2(url string) s3.EndpointResolverV2 {
+	return staticS3EndpointResolver{url: url}
 }
 
 func (m *Manager) Download() error {
-	newSession, err := m.newSession()
+	ctx := context.Background()
+	cfg, err := m.newConfig(ctx)
 	if err != nil {
-		m.entry.Errorf("unable to create session: %s", err.Error())
-		return fmt.Errorf("unable to create session: %s", err)
+		m.entry.Errorf("unable to create AWS config: %s", err.Error())
+		return fmt.Errorf("unable to create AWS config: %s", err)
 	}
 
-	buffer := []byte{}
-	memWriter := aws.NewWriteAtBuffer(buffer)
-	downloader := s3manager.NewDownloader(newSession)
-	_, err = downloader.Download(memWriter,
-		&s3.GetObjectInput{
-			Bucket: aws.String(m.config.S3.Bucket),
-			Key:    aws.String(m.config.S3.DownloadKey),
-		})
-
+	client := s3.NewFromConfig(cfg, s3.WithEndpointResolverV2(customS3EndpointResolverV2(m.config.S3.URL)))
+	downloader := manager.NewDownloader(client)
+	buf := manager.NewWriteAtBuffer([]byte{})
+	_, err = downloader.Download(ctx, buf, &s3.GetObjectInput{
+		Bucket: &m.config.S3.Bucket,
+		Key:    &m.config.S3.DownloadKey,
+	})
 	if err != nil {
 		m.entry.Errorf("unable to download file: %s", err.Error())
 		return fmt.Errorf("unable to download file: %s", err)
 	}
-	if !bytes.Equal(m.downloadFile, memWriter.Bytes()) {
+	if !bytes.Equal(m.downloadFile, buf.Bytes()) {
 		m.entry.Errorf("downloaded file content mismatch")
 		return errors.New("downloaded file content mismatch")
 	}
@@ -85,68 +102,63 @@ func (m *Manager) Download() error {
 }
 
 func (m *Manager) Upload() error {
-	newSession, err := m.newSession()
+	ctx := context.Background()
+	cfg, err := m.newConfig(ctx)
 	if err != nil {
-		m.entry.Errorf("unable to create session: %s", err.Error())
-		return fmt.Errorf("unable to create session: %s", err)
+		m.entry.Errorf("unable to create AWS config: %s", err.Error())
+		return fmt.Errorf("unable to create AWS config: %s", err)
 	}
 
+	client := s3.NewFromConfig(cfg, s3.WithEndpointResolverV2(customS3EndpointResolverV2(m.config.S3.URL)))
+	uploader := manager.NewUploader(client)
 	reader := bytes.NewReader(m.uploadFile)
-	uploader := s3manager.NewUploader(newSession)
-	_, err = uploader.Upload(&s3manager.UploadInput{
+	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
 		Body:   reader,
-		Bucket: aws.String(m.config.S3.Bucket),
-		Key:    aws.String(m.config.S3.UploadKey),
+		Bucket: &m.config.S3.Bucket,
+		Key:    &m.config.S3.UploadKey,
 	})
-
 	if err != nil {
 		m.entry.Errorf("unable to upload file: %s", err.Error())
 		return fmt.Errorf("unable to upload file: %s", err)
 	}
-
 	return nil
 }
 
 func (m *Manager) FirstRun() error {
-	newSession, err := m.newSession()
+	ctx := context.Background()
+	cfg, err := m.newConfig(ctx)
 	if err != nil {
-		return fmt.Errorf("unable to create session: %s", err)
+		return fmt.Errorf("unable to create AWS config: %s", err)
 	}
 
-	client := s3.New(newSession)
+	client := s3.NewFromConfig(cfg, s3.WithEndpointResolverV2(customS3EndpointResolverV2(m.config.S3.URL)))
 	m.entry.Infof("creating bucket '%s'", m.config.S3.Bucket)
-	_, err = client.CreateBucket(
-		&s3.CreateBucketInput{
-			Bucket: aws.String(m.config.S3.Bucket),
-			CreateBucketConfiguration: &s3.CreateBucketConfiguration{
-				LocationConstraint: aws.String(m.config.S3.Region),
-			},
+	_, err = client.CreateBucket(ctx, &s3.CreateBucketInput{
+		Bucket: &m.config.S3.Bucket,
+		CreateBucketConfiguration: &s3types.CreateBucketConfiguration{
+			LocationConstraint: s3types.BucketLocationConstraint(m.config.S3.Region),
 		},
-	)
+	})
 	if err != nil {
-		var aerr awserr.Error
-		if errors.As(err, &aerr) {
-			switch aerr.Code() {
-			case s3.ErrCodeBucketAlreadyExists:
-			case s3.ErrCodeBucketAlreadyOwnedByYou:
-				m.entry.Warnf("bucket already exists: %s", err.Error())
-			default:
-				return fmt.Errorf("unable to create bucket '%s': %s", m.config.S3.Bucket, err)
-			}
+		var bErr *s3types.BucketAlreadyExists
+		var bOwnErr *s3types.BucketAlreadyOwnedByYou
+		if errors.As(err, &bErr) || errors.As(err, &bOwnErr) {
+			m.entry.Warnf("bucket already exists: %s", err.Error())
+		} else {
+			return fmt.Errorf("unable to create bucket '%s': %s", m.config.S3.Bucket, err)
 		}
 	}
 
 	reader := bytes.NewReader(m.downloadFile)
-	uploader := s3manager.NewUploader(newSession)
+	uploader := manager.NewUploader(client)
 	m.entry.Infof("uploading initial file '%s' from '%s'", m.config.S3.DownloadKey, m.config.S3.DownloadFilePath)
-	_, err = uploader.Upload(&s3manager.UploadInput{
+	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
 		Body:   reader,
-		Bucket: aws.String(m.config.S3.Bucket),
-		Key:    aws.String(m.config.S3.DownloadKey),
+		Bucket: &m.config.S3.Bucket,
+		Key:    &m.config.S3.DownloadKey,
 	})
 	if err != nil {
 		return fmt.Errorf("unable to upload initial file: %s", err)
 	}
-
 	return nil
 }
