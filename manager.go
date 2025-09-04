@@ -80,6 +80,9 @@ func (m *Manager) newClient(ctx context.Context) (*s3.Client, error) {
 		clientOpts = append(clientOpts, func(o *s3.Options) {
 			o.BaseEndpoint = aws.String(m.config.S3.URL)
 			o.UsePathStyle = true
+			o.RequestChecksumCalculation = aws.RequestChecksumCalculationWhenRequired
+			o.ResponseChecksumValidation = aws.ResponseChecksumValidationWhenRequired
+			o.DisableLogOutputChecksumValidationSkipped = true
 		})
 	}
 
@@ -114,7 +117,17 @@ func (m *Manager) Upload() error {
 	ctx := context.Background()
 
 	reader := bytes.NewReader(m.uploadFile)
-	uploader := manager.NewUploader(m.client)
+	uploader := manager.NewUploader(m.client, func(u *manager.Uploader) {
+		u.RequestChecksumCalculation = aws.RequestChecksumCalculationWhenRequired
+	})
+
+	// Remove potential leading slash from upload key
+	key := m.config.S3.UploadKey
+	if len(key) > 0 && key[0] == '/' {
+		key = key[1:]
+	}
+
+	m.entry.Debugf("uploading file: %s to bucket %s", key, m.config.S3.Bucket)
 
 	_, err := uploader.Upload(ctx, &s3.PutObjectInput{
 		Body:   reader,
@@ -153,7 +166,9 @@ func (m *Manager) FirstRun() error {
 	}
 
 	reader := bytes.NewReader(m.downloadFile)
-	uploader := manager.NewUploader(m.client)
+	uploader := manager.NewUploader(m.client, func(u *manager.Uploader) {
+		u.RequestChecksumCalculation = aws.RequestChecksumCalculationWhenRequired
+	})
 
 	m.entry.Infof("uploading initial file '%s' from '%s'", m.config.S3.DownloadKey, m.config.S3.DownloadFilePath)
 	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
