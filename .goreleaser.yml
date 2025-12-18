@@ -1,3 +1,5 @@
+version: 2
+
 project_name: s3rw_exporter
 
 builds:
@@ -22,17 +24,15 @@ builds:
 
 archives:
   - id: archives
-    builds:
-      - binary
-    format: "tar.gz"
+    ids: [ binary]
+    formats: ['tar.gz']
     name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
     wrap_in_directory: true
     files:
       - assets/*
   - id: archives-zip
-    builds:
-      - binary
-    format: "zip"
+    ids: [ binary ]
+    formats: ['zip']
     name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'
     wrap_in_directory: true
     files:
