@@ -10,9 +10,10 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
-	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -22,6 +23,7 @@ type Manager struct {
 	uploadFile   []byte
 	entry        *log.Entry
 	client       *s3.Client
+	tmClient     *transfermanager.Client
 }
 
 // NewManager -
@@ -51,6 +53,7 @@ func NewManager(config *Config) (*Manager, error) {
 		return nil, fmt.Errorf("unable to create S3 client: %w", err)
 	}
 	mgr.client = client
+	mgr.tmClient = transfermanager.New(client)
 
 	return mgr, nil
 }
@@ -93,12 +96,11 @@ func (m *Manager) newClient(ctx context.Context) (*s3.Client, error) {
 func (m *Manager) Download() error {
 	ctx := context.Background()
 
-	buffer := &manager.WriteAtBuffer{}
-	downloader := manager.NewDownloader(m.client)
-
-	_, err := downloader.Download(ctx, buffer, &s3.GetObjectInput{
-		Bucket: aws.String(m.config.S3.Bucket),
-		Key:    aws.String(m.config.S3.DownloadKey),
+	buffer := types.NewWriteAtBuffer(make([]byte, 0))
+	_, err := m.tmClient.DownloadObject(ctx, &transfermanager.DownloadObjectInput{
+		Bucket:   aws.String(m.config.S3.Bucket),
+		Key:      aws.String(m.config.S3.DownloadKey),
+		WriterAt: buffer,
 	})
 
 	if err != nil {
@@ -117,9 +119,6 @@ func (m *Manager) Upload() error {
 	ctx := context.Background()
 
 	reader := bytes.NewReader(m.uploadFile)
-	uploader := manager.NewUploader(m.client, func(u *manager.Uploader) {
-		u.RequestChecksumCalculation = aws.RequestChecksumCalculationWhenRequired
-	})
 
 	// Remove potential leading slash from upload key
 	key := m.config.S3.UploadKey
@@ -129,10 +128,10 @@ func (m *Manager) Upload() error {
 
 	m.entry.Debugf("uploading file: %s to bucket %s", key, m.config.S3.Bucket)
 
-	_, err := uploader.Upload(ctx, &s3.PutObjectInput{
+	_, err := m.tmClient.UploadObject(ctx, &transfermanager.UploadObjectInput{
 		Body:   reader,
 		Bucket: aws.String(m.config.S3.Bucket),
-		Key:    aws.String(m.config.S3.UploadKey),
+		Key:    aws.String(key),
 	})
 
 	if err != nil {
@@ -149,14 +148,14 @@ func (m *Manager) FirstRun() error {
 	m.entry.Infof("creating bucket '%s'", m.config.S3.Bucket)
 	_, err := m.client.CreateBucket(ctx, &s3.CreateBucketInput{
 		Bucket: aws.String(m.config.S3.Bucket),
-		CreateBucketConfiguration: &types.CreateBucketConfiguration{
-			LocationConstraint: types.BucketLocationConstraint(m.config.S3.Region),
+		CreateBucketConfiguration: &s3types.CreateBucketConfiguration{
+			LocationConstraint: s3types.BucketLocationConstraint(m.config.S3.Region),
 		},
 	})
 
 	if err != nil {
-		var bucketAlreadyExists *types.BucketAlreadyExists
-		var bucketAlreadyOwnedByYou *types.BucketAlreadyOwnedByYou
+		var bucketAlreadyExists *s3types.BucketAlreadyExists
+		var bucketAlreadyOwnedByYou *s3types.BucketAlreadyOwnedByYou
 
 		if errors.As(err, &bucketAlreadyExists) || errors.As(err, &bucketAlreadyOwnedByYou) {
 			m.entry.Warnf("bucket already exists: %s", err.Error())
@@ -166,12 +165,9 @@ func (m *Manager) FirstRun() error {
 	}
 
 	reader := bytes.NewReader(m.downloadFile)
-	uploader := manager.NewUploader(m.client, func(u *manager.Uploader) {
-		u.RequestChecksumCalculation = aws.RequestChecksumCalculationWhenRequired
-	})
 
 	m.entry.Infof("uploading initial file '%s' from '%s'", m.config.S3.DownloadKey, m.config.S3.DownloadFilePath)
-	_, err = uploader.Upload(ctx, &s3.PutObjectInput{
+	_, err = m.tmClient.UploadObject(ctx, &transfermanager.UploadObjectInput{
 		Body:   reader,
 		Bucket: aws.String(m.config.S3.Bucket),
 		Key:    aws.String(m.config.S3.DownloadKey),
