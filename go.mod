@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.47.8
 	github.com/aws/aws-sdk-go-v2/config v1.33.16
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.16
-	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.5.2
+	github.com/aws/aws-sdk-go-v2/feature/s3/transfermanager v0.5.5
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.114.9
 	github.com/prometheus/client_golang v1.25.0
 	github.com/prometheus/common v0.73.1
